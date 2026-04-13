@@ -11,9 +11,10 @@ load_dotenv()
 HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 class SummarizeRequest(BaseModel):
-    text: str = None
-    url: str = None
+    text: Optional[str] = None
+    url: Optional[str] = None
     length: str = "medium"
+    language: str = "en"
 
 def scrape_url(url: str):
     try:
@@ -24,7 +25,7 @@ def scrape_url(url: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid or unreachable URL: {str(e)}")
 
-def summarize_text(text: str, length: str):
+def summarize_text(text: str, length: str, language: str):
     if (length == "short"):
         max_len = 50
         min_len = 20
@@ -34,10 +35,11 @@ def summarize_text(text: str, length: str):
     else:
         max_len = 130
         min_len = 50
-            
+    
+    prompted_text = f"Provide a detailed summary of the following text in {language} language:\n\n{text}"
     api_url = "https://router.huggingface.co/hf-inference/models/facebook/bart-large-cnn"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    payload = {"inputs": text, "parameters": {"max_length": max_len, "min_length": min_len}}
+    payload = {"inputs": prompted_text, "parameters": {"max_length": max_len, "min_length": min_len}}
     response = httpx.post(api_url, headers=headers, json=payload, timeout=30.0)
     data = response.json()
 

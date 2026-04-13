@@ -10,6 +10,7 @@ function App() {
   const [truncated, setTruncated] = useState(false)
   const [inputMode, setInputMode] = useState('text')
   const [copied, setCopied] = useState(false)
+  const [language, setLanguage] = useState('English')
 
   const handleSummarize = async () => {
     setError('')
@@ -24,7 +25,8 @@ function App() {
         body: JSON.stringify({
           text: inputMode === 'text' ? text : "",
           url: inputMode === 'url' ? url : "",
-          length: length
+          length: length,
+          language: language
         }),
       })
 
@@ -136,28 +138,47 @@ function App() {
           )}
         </div>
 
-        {/* Length Selection */}
-        <div className="flex items-center justify-between mb-5">
-          <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Summary length</span>
-          <div className="flex gap-1.5">
-            {[
-              { value: 'short', label: 'Short' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'long', label: 'Detailed' }
-            ].map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setLength(opt.value)}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200
-                  ${length === opt.value
-                    ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
-                    : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
-                  }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
+
+          {/* 1. Language Selector */}
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase">Language</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-zinc-800/50 text-zinc-200 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block p-2 border border-zinc-700/50 outline-none transition-all cursor-pointer hover:bg-zinc-800"
+            >
+              <option value="English">English</option>
+              <option value="Turkish">Türkçe</option>
+              <option value="German">Deutsch</option>
+              <option value="French">Français</option>
+            </select>
           </div>
+
+          {/* 2. Summary Length Selector */}
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Summary length</span>
+            <div className="flex gap-1.5">
+              {[
+                { value: 'short', label: 'Short' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'long', label: 'Detailed' }
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setLength(opt.value)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200
+            ${length === opt.value
+                      ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
+                      : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         {/* Summarize Button */}
