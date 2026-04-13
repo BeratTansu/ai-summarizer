@@ -49,9 +49,15 @@ def summarize_text(text: str, length: str, language: str):
     return data[0]["summary_text"]
 
 app = FastAPI()
+
+origins = [
+    "https://ai-summarizer-chi-six.vercel.app",
+    "http://localhost:5173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,6 +81,6 @@ def create_summary(request: SummarizeRequest):
         text_to_summarize = text_to_summarize[:4000]
         is_truncated = True
     
-    result = summarize_text(text_to_summarize, request.length)
+    result = summarize_text(text_to_summarize, request.length, request.language)
 
     return {"summary": result, "truncated": is_truncated}
