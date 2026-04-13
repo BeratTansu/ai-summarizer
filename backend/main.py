@@ -26,27 +26,39 @@ def scrape_url(url: str):
         raise HTTPException(status_code=400, detail=f"Invalid or unreachable URL: {str(e)}")
 
 def summarize_text(text: str, length: str, language: str):
+    # LLM token limitleri
     if (length == "short"):
-        max_len = 50
-        min_len = 20
+        max_tokens = 100
     elif (length == "long"):
-        max_len = 250
-        min_len = 100
+        max_tokens = 400
     else:
-        max_len = 130
-        min_len = 50
+        max_tokens = 200
     
-    prompted_text = f"Provide a detailed summary of the following text in {language} language:\n\n{text}"
-    api_url = "https://router.huggingface.co/hf-inference/models/facebook/bart-large-cnn"
+    # Yeni Zeki Modelimiz: Mistral-7B-Instruct
+    api_url = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    payload = {"inputs": prompted_text, "parameters": {"max_length": max_len, "min_length": min_len}}
-    response = httpx.post(api_url, headers=headers, json=payload, timeout=30.0)
+    
+    # Modele tam olarak ne yapması gerektiğini söyleyen net bir komut (Prompt)
+    prompt = f"<s>[INST] You are an expert assistant. Summarize the following text accurately in {language} language. Only output the summary, nothing else.\n\nText: {text} [/INST]"
+    
+    # LLM parametrelerini güncelledik (max_length yerine max_new_tokens)
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": max_tokens,
+            "return_full_text": False
+        }
+    }
+    
+    # LLM'ler biraz daha uzun düşünebilir, timeout'u 40 saniyeye çıkardık
+    response = httpx.post(api_url, headers=headers, json=payload, timeout=40.0)
     data = response.json()
 
     if isinstance(data, dict) and "error" in data:
         raise HTTPException(status_code=503, detail=f"Hugging Face Hatası: {data['error']}")
 
-    return data[0]["summary_text"]
+    # Çıktı anahtarını (summary_text yerine generated_text) güncelledik
+    return data[0]["generated_text"].strip()
 
 app = FastAPI()
 
