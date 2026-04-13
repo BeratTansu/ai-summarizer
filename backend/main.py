@@ -27,11 +27,11 @@ def scrape_url(url: str):
 
 def summarize_text(text: str, length: str, language: str):
     if (length == "short"):
-        max_tokens = 100
+        max_tokens = 250    
     elif (length == "long"):
-        max_tokens = 400
+        max_tokens = 1000   
     else:
-        max_tokens = 200
+        max_tokens = 500    
     
     api_url = "https://router.huggingface.co/v1/chat/completions"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
