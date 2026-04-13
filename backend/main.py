@@ -52,6 +52,10 @@ def summarize_text(text: str, length: str, language: str):
     
     # LLM'ler biraz daha uzun düşünebilir, timeout'u 40 saniyeye çıkardık
     response = httpx.post(api_url, headers=headers, json=payload, timeout=40.0)
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail=f"HF Error: {response.text}")
+    
     data = response.json()
 
     if isinstance(data, dict) and "error" in data:
