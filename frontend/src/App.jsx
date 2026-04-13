@@ -3,12 +3,13 @@ import { useState } from 'react'
 function App() {
   const [text, setText] = useState('')
   const [url, setUrl] = useState('')
+  const [file, setFile] = useState(null) 
   const [length, setLength] = useState('medium')
   const [summary, setSummary] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [truncated, setTruncated] = useState(false)
-  const [inputMode, setInputMode] = useState('text')
+  const [inputMode, setInputMode] = useState('text') 
   const [copied, setCopied] = useState(false)
   const [language, setLanguage] = useState('English')
 
@@ -19,16 +20,34 @@ function App() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: inputMode === 'text' ? text : "",
-          url: inputMode === 'url' ? url : "",
-          length: length,
-          language: language
-        }),
-      })
+      let response;
+
+      if (inputMode === 'pdf') {
+        if (!file) throw new Error("Lütfen bir PDF dosyası seçin.");
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('length', length);
+        formData.append('language', language);
+
+        response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize-pdf', {
+          method: 'POST',
+          body: formData, 
+        });
+      } 
+      
+      else {
+        response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: inputMode === 'text' ? text : "",
+            url: inputMode === 'url' ? url : "",
+            length: length,
+            language: language
+          }),
+        });
+      }
 
       const data = await response.json()
 
@@ -36,7 +55,7 @@ function App() {
         const errorMessage = Array.isArray(data.detail)
           ? data.detail[0].msg
           : data.detail
-        throw new Error(errorMessage || 'An error occurred while communicating with the server.')
+        throw new Error(errorMessage || 'Sunucu ile iletişimde bir hata oluştu.')
       }
 
       setSummary(data.summary)
@@ -56,7 +75,10 @@ function App() {
   }
 
   const wordCount = summary ? summary.split(/\s+/).filter(Boolean).length : 0
-  const isDisabled = isLoading || (inputMode === 'text' ? !text.trim() : !url.trim())
+  const isDisabled = isLoading || 
+    (inputMode === 'text' ? !text.trim() : 
+     inputMode === 'url' ? !url.trim() : 
+     !file);
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -86,7 +108,7 @@ function App() {
           <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Summarize long texts instantly with AI</p>
         </div>
 
-        {/* Input Mode Toggle */}
+        {/* Input Mode Toggle - ŞİMDİ 3 BUTON VAR */}
         <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 mb-4">
           <button
             onClick={() => setInputMode('text')}
@@ -101,6 +123,7 @@ function App() {
             </svg>
             Text
           </button>
+          
           <button
             onClick={() => setInputMode('url')}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2
@@ -115,11 +138,29 @@ function App() {
             </svg>
             URL
           </button>
+
+          <button
+            onClick={() => setInputMode('pdf')}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2
+              ${inputMode === 'pdf'
+                ? 'bg-zinc-800 text-zinc-100 shadow-sm shadow-black/30'
+                : 'text-zinc-500 hover:text-zinc-400'
+              }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            PDF
+          </button>
         </div>
 
-        {/* Input */}
+        {/* Input Area (Text, URL, veya PDF Yükleme) */}
         <div className="mb-4">
-          {inputMode === 'text' ? (
+          {inputMode === 'text' && (
             <textarea
               rows="7"
               placeholder="Paste the text you want to summarize here..."
@@ -127,7 +168,9 @@ function App() {
               onChange={(e) => setText(e.target.value)}
               className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-zinc-200 text-sm leading-relaxed resize-y placeholder-zinc-600 focus:outline-none focus:border-violet-500/40 focus:ring-2 focus:ring-violet-500/10 transition-all duration-200"
             />
-          ) : (
+          )}
+          
+          {inputMode === 'url' && (
             <input
               type="url"
               placeholder="https://example.com/article"
@@ -136,10 +179,36 @@ function App() {
               className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-zinc-200 text-sm placeholder-zinc-600 focus:outline-none focus:border-violet-500/40 focus:ring-2 focus:ring-violet-500/10 transition-all duration-200"
             />
           )}
+
+          {inputMode === 'pdf' && (
+            <div className="w-full bg-zinc-900/50 border border-dashed border-zinc-700 rounded-xl p-8 flex flex-col items-center justify-center transition-all hover:border-violet-500/50 hover:bg-zinc-900/80">
+              <input
+                type="file"
+                accept=".pdf"
+                id="pdf-upload"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+              <label htmlFor="pdf-upload" className="cursor-pointer flex flex-col items-center gap-3 text-center">
+                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 mb-2">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <span className="text-zinc-300 text-sm font-medium">
+                  {file ? file.name : "Click to upload a PDF file"}
+                </span>
+                <span className="text-zinc-500 text-xs">
+                  {file ? "Click to change file" : "Max size 5MB"}
+                </span>
+              </label>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
-
           {/* 1. Language Selector */}
           <div className="flex items-center gap-4">
             <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase">Language</span>
@@ -178,7 +247,6 @@ function App() {
               ))}
             </div>
           </div>
-
         </div>
 
         {/* Summarize Button */}

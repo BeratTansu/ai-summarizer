@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from pydantic import BaseModel
 import httpx
 from bs4 import BeautifulSoup
@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
+import io
+from PyPDF2 import PdfReader
 
 load_dotenv()
 HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
@@ -24,6 +26,22 @@ def scrape_url(url: str):
         return " ".join([p.text for p in paragraphs])
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid or unreachable URL: {str(e)}")
+
+def extract_text_from_pdf(file_bytes: bytes) -> str:
+    try:
+        pdf_file = io.BytesIO(file_bytes)
+        reader = PdfReader(pdf_file)
+        
+        text = ""
+        
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted + " "
+                
+        return text.strip()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"PDF okuma hatası: {str(e)}")
 
 def summarize_text(text: str, length: str, language: str):
     if (length == "short"):
@@ -90,3 +108,32 @@ def create_summary(request: SummarizeRequest):
     result = summarize_text(text_to_summarize, request.length, request.language)
 
     return {"summary": result, "truncated": is_truncated}
+
+@app.post("/summarize-pdf")
+async def summarize_pdf(
+    file: UploadFile = File(...),
+    length: str = Form("medium"),
+    language: str = Form("en")
+):
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Lütfen geçerli bir PDF dosyası yükleyin.")
+
+    try:
+        content = await file.read()
+        
+        text_from_pdf = extract_text_from_pdf(content)
+        
+        if not text_from_pdf.strip():
+            raise HTTPException(status_code=400, detail="PDF'den metin çıkarılamadı (PDF boş veya sadece resimlerden oluşuyor olabilir).")
+
+        is_truncated = False
+        if len(text_from_pdf) > 4000:
+            text_from_pdf = text_from_pdf[:4000]
+            is_truncated = True
+
+        summary = summarize_text(text_from_pdf, length, language)
+
+        return {"summary": summary, "truncated": is_truncated}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sunucu hatası: {str(e)}")
