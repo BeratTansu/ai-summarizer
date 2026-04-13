@@ -156,7 +156,7 @@ ai-summarizer/
 
 ## Future Improvements
 
-- [ ] Multi-language summarization support
+- [x] Multi-language summarization support
 - [ ] PDF file upload and summarization
 - [ ] User authentication and summary history
 - [x] Docker containerization
