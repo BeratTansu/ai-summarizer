@@ -142,7 +142,7 @@ ai-summarizer/
 - [ ] Multi-language summarization support
 - [ ] PDF file upload and summarization
 - [ ] User authentication and summary history
-- [ ] Docker containerization
+- [x] Docker containerization
 - [ ] Deploy to cloud (Railway / Render)
 
 ## Author
