@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
-
+from typing import Optional
 
 load_dotenv()
 HF_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
