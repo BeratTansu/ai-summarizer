@@ -26,7 +26,6 @@ def scrape_url(url: str):
         raise HTTPException(status_code=400, detail=f"Invalid or unreachable URL: {str(e)}")
 
 def summarize_text(text: str, length: str, language: str):
-    # LLM token limitleri
     if (length == "short"):
         max_tokens = 100
     elif (length == "long"):
@@ -34,23 +33,18 @@ def summarize_text(text: str, length: str, language: str):
     else:
         max_tokens = 200
     
-    # Yeni Zeki Modelimiz: Mistral-7B-Instruct
-    api_url = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3"
+    api_url = "https://router.huggingface.co/v1/chat/completions"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
     
-    # Modele tam olarak ne yapması gerektiğini söyleyen net bir komut (Prompt)
-    prompt = f"<s>[INST] You are an expert assistant. Summarize the following text accurately in {language} language. Only output the summary, nothing else.\n\nText: {text} [/INST]"
-    
-    # LLM parametrelerini güncelledik (max_length yerine max_new_tokens)
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": max_tokens,
-            "return_full_text": False
-        }
+        "model": "Qwen/Qwen2.5-7B-Instruct", # Yeni modelimiz: Çok dilli (Türkçe) yeteneği muazzamdır
+        "messages": [
+            {"role": "system", "content": f"You are an expert assistant. Summarize the text provided by the user in {language} language. Return ONLY the summary, no other text."},
+            {"role": "user", "content": text}
+        ],
+        "max_tokens": max_tokens
     }
     
-    # LLM'ler biraz daha uzun düşünebilir, timeout'u 40 saniyeye çıkardık
     response = httpx.post(api_url, headers=headers, json=payload, timeout=40.0)
 
     if response.status_code != 200:
@@ -58,11 +52,7 @@ def summarize_text(text: str, length: str, language: str):
     
     data = response.json()
 
-    if isinstance(data, dict) and "error" in data:
-        raise HTTPException(status_code=503, detail=f"Hugging Face Hatası: {data['error']}")
-
-    # Çıktı anahtarını (summary_text yerine generated_text) güncelledik
-    return data[0]["generated_text"].strip()
+    return data["choices"][0]["message"]["content"].strip()
 
 app = FastAPI()
 
