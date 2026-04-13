@@ -135,5 +135,7 @@ async def summarize_pdf(
         summary = summarize_text(text_from_pdf, length, language)
         return {"summary": summary, "truncated": is_truncated}
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
