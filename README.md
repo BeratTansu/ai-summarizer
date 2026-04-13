@@ -1,6 +1,10 @@
 # Summarize.ai — AI-Powered Text Summarizer
 
+**[Live Demo](https://ai-summarizer-chi-six.vercel.app)** | **[API Docs](https://ai-summarizer-iwtj.onrender.com/docs)**
+
 A full-stack web application that summarizes long texts and web articles using artificial intelligence. Built with **FastAPI** (Python) on the backend and **React** on the frontend, powered by Hugging Face's BART model.
+
+> **Note:** The backend is hosted on Render's free tier, so the first request may take ~50 seconds while the server wakes up.
 
 ![screenshot](frontend/src/assets/hero.png)
 
@@ -22,13 +26,16 @@ A full-stack web application that summarizes long texts and web articles using a
 | **AI Model** | Hugging Face Inference API (`facebook/bart-large-cnn`) |
 | **Web Scraping** | BeautifulSoup4, httpx |
 | **Environment** | python-dotenv |
+| **Containerization** | Docker |
+| **Backend Hosting** | Render (Docker) |
+| **Frontend Hosting** | Vercel |
 
 ## Architecture
 
 ```
-Client (React) → HTTP POST /summarize → FastAPI Backend
-                                            ├── Text input → Hugging Face API → Summary
-                                            └── URL input  → Scrape with BS4 → Hugging Face API → Summary
+Client (React on Vercel) → HTTP POST /summarize → FastAPI Backend (Render)
+                                                      ├── Text input → Hugging Face API → Summary
+                                                      └── URL input  → Scrape with BS4 → Hugging Face API → Summary
 ```
 
 ## API Endpoints
@@ -85,7 +92,7 @@ python -m venv venv
 # macOS/Linux
 source venv/bin/activate
 
-pip install fastapi uvicorn httpx beautifulsoup4 requests python-dotenv
+pip install -r requirements.txt
 ```
 
 Create a `.env` file in the `backend/` directory:
@@ -112,6 +119,14 @@ npm run dev
 
 The app will be available at `http://localhost:5173`.
 
+### Docker Setup
+
+```bash
+cd backend
+docker build -t ai-summarizer-backend .
+docker run -p 8000:8000 ai-summarizer-backend
+```
+
 ## Error Handling
 
 - **503 Service Unavailable** — Returned when the Hugging Face model is loading or unavailable
@@ -124,6 +139,8 @@ The app will be available at `http://localhost:5173`.
 ai-summarizer/
 ├── backend/
 │   ├── main.py            # FastAPI application & endpoints
+│   ├── Dockerfile         # Docker configuration
+│   ├── .dockerignore
 │   ├── .env               # API keys (not committed)
 │   └── requirements.txt
 ├── frontend/
@@ -143,7 +160,7 @@ ai-summarizer/
 - [ ] PDF file upload and summarization
 - [ ] User authentication and summary history
 - [x] Docker containerization
-- [ ] Deploy to cloud (Railway / Render)
+- [x] Deploy to cloud (Render + Vercel)
 
 ## Author
 
