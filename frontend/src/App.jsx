@@ -205,7 +205,7 @@ function App() {
                 Summarize<span className="text-violet-400">.ai</span>
               </h1>
             </div>
-            <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Summarize your texts instantly with AI</p>
+            <p className="text-sm text-zinc-600 ml-[52px]">Summarize your texts instantly with AI</p>
           </div>
 
           <div className="flex items-center gap-3">
