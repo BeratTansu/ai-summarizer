@@ -3,13 +3,13 @@ import { useState } from 'react'
 function App() {
   const [text, setText] = useState('')
   const [url, setUrl] = useState('')
-  const [file, setFile] = useState(null) 
+  const [file, setFile] = useState(null)
   const [length, setLength] = useState('medium')
   const [summary, setSummary] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [truncated, setTruncated] = useState(false)
-  const [inputMode, setInputMode] = useState('text') 
+  const [inputMode, setInputMode] = useState('text')
   const [copied, setCopied] = useState(false)
   const [language, setLanguage] = useState('English')
 
@@ -21,7 +21,7 @@ function App() {
     if (selectedFile) {
       // 5MB Limit Kontrolü (5 * 1024 * 1024 bytes)
       if (selectedFile.size > 5242880) {
-        setError("Dosya boyutu çok büyük! Maksimum limit 5MB.");
+        setError("File size is too large! Maximum limit is 5MB.");
         setFile(null);
         e.target.value = null; // Input alanını temizle
       } else {
@@ -37,11 +37,15 @@ function App() {
     setIsLoading(true)
 
     try {
+      if (inputMode === 'text' && text.trim().length < 50) {
+        throw new Error("Text is too short! Please enter at least 50 characters for an effective summary.");
+      }
+
       let response;
 
       if (inputMode === 'pdf') {
-        if (!file) throw new Error("Lütfen bir PDF dosyası seçin.");
-        
+        if (!file) throw new Error("Please select a PDF file.");
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('length', length);
@@ -49,9 +53,9 @@ function App() {
 
         response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize-pdf', {
           method: 'POST',
-          body: formData, 
+          body: formData,
         });
-      } 
+      }
       else {
         response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize', {
           method: 'POST',
@@ -68,10 +72,10 @@ function App() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Backend'den gelen hata mesajını (detail) yakalıyoruz
-        const errorMessage = typeof data.detail === 'string' 
-          ? data.detail 
-          : (Array.isArray(data.detail) ? data.detail[0].msg : 'Bir hata oluştu.');
+        // Backend'den gelen hata mesajını yakalıyoruz
+        const errorMessage = typeof data.detail === 'string'
+          ? data.detail
+          : (Array.isArray(data.detail) ? data.detail[0].msg : 'An error occurred while communicating with the server.');
         throw new Error(errorMessage);
       }
 
@@ -92,10 +96,10 @@ function App() {
   }
 
   const wordCount = summary ? summary.split(/\s+/).filter(Boolean).length : 0
-  const isDisabled = isLoading || 
-    (inputMode === 'text' ? !text.trim() : 
-     inputMode === 'url' ? !url.trim() : 
-     !file);
+  const isDisabled = isLoading ||
+    (inputMode === 'text' ? !text.trim() :
+      inputMode === 'url' ? !url.trim() :
+        !file);
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -122,7 +126,7 @@ function App() {
               Summarize<span className="text-violet-400">.ai</span>
             </h1>
           </div>
-          <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Metinlerinizi yapay zeka ile saniyeler içinde özetleyin</p>
+          <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Summarize your texts instantly with AI</p>
         </div>
 
         {/* Input Mode Toggle */}
@@ -131,7 +135,7 @@ function App() {
             <button
               key={mode}
               onClick={() => { setInputMode(mode); setError(''); }}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 capitalize
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 capitalize cursor-pointer
                 ${inputMode === mode
                   ? 'bg-zinc-800 text-zinc-100 shadow-sm shadow-black/30'
                   : 'text-zinc-500 hover:text-zinc-400'
@@ -150,13 +154,13 @@ function App() {
           {inputMode === 'text' && (
             <textarea
               rows="7"
-              placeholder="Özetlemek istediğiniz metni buraya yapıştırın..."
+              placeholder="Paste the text you want to summarize here..."
               value={text}
               onChange={(e) => setText(e.target.value)}
               className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 text-zinc-200 text-sm leading-relaxed resize-y placeholder-zinc-600 focus:outline-none focus:border-violet-500/40 focus:ring-2 focus:ring-violet-500/10 transition-all duration-200"
             />
           )}
-          
+
           {inputMode === 'url' && (
             <input
               type="url"
@@ -176,7 +180,7 @@ function App() {
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <label htmlFor="pdf-upload" className="cursor-pointer flex flex-col items-center gap-3 text-center">
+              <label htmlFor="pdf-upload" className="cursor-pointer flex flex-col items-center gap-3 text-center cursor-pointer">
                 <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 mb-2">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -185,10 +189,10 @@ function App() {
                   </svg>
                 </div>
                 <span className="text-zinc-300 text-sm font-medium">
-                  {file ? file.name : "PDF Yüklemek için Tıklayın"}
+                  {file ? file.name : "Click to upload a PDF file"}
                 </span>
                 <span className="text-zinc-500 text-xs">
-                  {file ? "Dosyayı değiştirmek için tıklayın" : "Maksimum limit 5MB"}
+                  {file ? "Click to change the file" : "Maximum file size: 5MB"}
                 </span>
               </label>
             </div>
@@ -197,11 +201,11 @@ function App() {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
           <div className="flex items-center gap-4">
-            <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase">Dil</span>
+            <span className="text-xs font-semibold text-zinc-400 tracking-wider uppercase">Language</span>
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="bg-zinc-800/50 text-zinc-200 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block p-2 border border-zinc-700/50 outline-none transition-all cursor-pointer hover:bg-zinc-800"
+              className="bg-zinc-800/50 text-zinc-200 text-sm rounded-lg focus:ring-violet-500 focus:border-violet-500 block p-2 border border-zinc-700/50 outline-none transition-all cursor-pointer hover:bg-zinc-800 cursor-pointer"
             >
               <option value="English">English</option>
               <option value="Turkish">Türkçe</option>
@@ -211,25 +215,30 @@ function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Uzunluk</span>
-            <div className="flex gap-1.5">
-              {[
-                { value: 'short', label: 'Short' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'long', label: 'Detailed' }
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setLength(opt.value)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200
+            <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">Length</span>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex gap-1.5">
+                {[
+                  { value: 'short', label: 'Short' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'long', label: 'Detailed' }
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setLength(opt.value)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer
                     ${length === opt.value
-                      ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
-                      : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
-                    }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+                        ? 'bg-violet-500 text-white shadow-md shadow-violet-500/20'
+                        : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {length === 'short' && <span className="text-[10px] text-zinc-500/80 italic ml-2 transition-all">~20-50 words</span>}
+              {length === 'medium' && <span className="text-[10px] text-zinc-500/80 italic ml-2 transition-all">~50-150 words</span>}
+              {length === 'long' && <span className="text-[10px] text-zinc-500/80 italic ml-2 transition-all">~150-300 words</span>}
             </div>
           </div>
         </div>
@@ -238,7 +247,7 @@ function App() {
         <button
           onClick={handleSummarize}
           disabled={isDisabled}
-          className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2
+          className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer
             ${isLoading
               ? 'bg-zinc-800 border border-zinc-700 text-zinc-400'
               : isDisabled
@@ -249,11 +258,11 @@ function App() {
           {isLoading ? (
             <>
               <span className="w-4 h-4 border-2 border-zinc-600 border-t-violet-400 rounded-full animate-spin" />
-              AI Düşünüyor...
+              AI is thinking...
             </>
           ) : (
             <>
-              Özetle
+              Summarize
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12,5 19,12 12,19" />
@@ -282,7 +291,7 @@ function App() {
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            Yapay zeka sınırları nedeniyle metin özetleme öncesinde kısaltıldı.
+            Text was truncated before summarization due to AI limits.
           </div>
         )}
 
@@ -290,23 +299,33 @@ function App() {
         {summary && (
           <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 animate-[fadeIn_0.4s_ease]">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
-              <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">Özet</span>
-              <span className="text-xs text-zinc-600 font-mono">{wordCount} kelime</span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">Summary</span>
+              <span className="text-xs text-zinc-600 font-mono">{wordCount} words</span>
             </div>
             <p className="text-sm text-zinc-400 leading-7">{summary}</p>
             <button
               onClick={handleCopy}
-              className="mt-4 px-4 py-2 rounded-lg border border-zinc-800 text-zinc-500 text-xs font-medium flex items-center gap-2 hover:text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all duration-200"
+              className="mt-4 px-4 py-2 rounded-lg border border-zinc-800 text-zinc-500 text-xs font-medium flex items-center gap-2 hover:text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800/50 transition-all duration-200 cursor-pointer"
             >
-              {copied ? "Kopyalandı!" : "Kopyala"}
+              {copied ? "Copied!" : "Copy"}
             </button>
           </div>
         )}
 
         {/* Footer */}
-        <p className="text-center text-xs text-zinc-700 mt-10">
-          Built by <span className="text-violet-400">Berat Tansu Çabuk</span> — Powered by Hugging Face AI
-        </p>
+        <div className="mt-10 flex flex-col items-center justify-center gap-3">
+          <p className="text-xs text-zinc-700">
+            Built by <a href="https://github.com/BeratTansu" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors font-medium cursor-pointer">Berat Tansu Çabuk</a> — Powered by Hugging Face AI
+          </p>
+          <div className="flex items-center gap-4 text-zinc-600">
+            <a href="https://github.com/BeratTansu" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors cursor-pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            </a>
+            <a href="https://www.linkedin.com/in/berat-tansu-çabuk-02b55b244/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors cursor-pointer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+            </a>
+          </div>
+        </div>
       </div>
 
       <style>{`

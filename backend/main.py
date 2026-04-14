@@ -95,6 +95,8 @@ def create_summary(request: SummarizeRequest):
     if request.url:
         text_to_summarize = scrape_url(request.url)
     elif request.text:
+        if len(request.text.strip()) < 50:
+            raise HTTPException(status_code=400, detail="Metin çok kısa! Etkili bir özet için lütfen en az 50 karakter girin.")
         text_to_summarize = request.text
     else:
         raise HTTPException(status_code=400, detail="Metin veya URL gereklidir.")
