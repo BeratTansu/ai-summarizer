@@ -125,15 +125,22 @@ function App() {
         formData.append('length', length);
         formData.append('language', language);
 
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize-pdf', {
           method: 'POST',
+          headers: headers,
           body: formData,
         });
       }
       else {
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         response = await fetch('https://ai-summarizer-iwtj.onrender.com/summarize', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify({
             text: inputMode === 'text' ? text : "",
             url: inputMode === 'url' ? url : "",
