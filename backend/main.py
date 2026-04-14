@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine, User, Summary
+from database import SessionLocal, engine, User, Summary, get_db
 import auth
 
 load_dotenv()

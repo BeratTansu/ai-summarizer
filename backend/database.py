@@ -33,3 +33,10 @@ class Summary(Base):
     owner = relationship("User", back_populates="summaries")
 
 Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

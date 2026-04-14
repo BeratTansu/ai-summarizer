@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 import os
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer
-from database import SessionLocal, User
+from database import SessionLocal, User, get_db
+from sqlalchemy.orm import Session
 
 load_dotenv()
 
