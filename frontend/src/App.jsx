@@ -94,11 +94,10 @@ function App() {
     setError('');
 
     if (selectedFile) {
-      // 5MB Limit Kontrolü (5 * 1024 * 1024 bytes)
       if (selectedFile.size > 5242880) {
         setError("File size is too large! Maximum limit is 5MB.");
         setFile(null);
-        e.target.value = null; // Input alanını temizle
+        e.target.value = null; 
       } else {
         setFile(selectedFile);
       }
@@ -147,7 +146,6 @@ function App() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Backend'den gelen hata mesajını yakalıyoruz
         const errorMessage = typeof data.detail === 'string'
           ? data.detail
           : (Array.isArray(data.detail) ? data.detail[0].msg : 'An error occurred while communicating with the server.');
@@ -179,14 +177,11 @@ function App() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
 
-      {/* Background Glows */}
       <div className="absolute -top-32 -right-32 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-indigo-500/8 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-2xl relative z-10">
 
-        {/* Header */}
-        {/* Header */}
         <div className="mb-8 flex justify-between items-start">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -206,8 +201,6 @@ function App() {
             <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Summarize your texts instantly with AI</p>
           </div>
 
-          {/* GİRİŞ YAPILMIŞSA KULLANICI ADI VE ÇIKIŞ BUTONU, YAPILMAMIŞSA SİGN IN BUTONU */}
-          {/* GİRİŞ YAPILMIŞSA KULLANICI ADI, HISTORY VE ÇIKIŞ BUTONU */}
           <div className="flex items-center gap-3">
             {token ? (
               <div className="flex flex-col items-end">
@@ -238,7 +231,6 @@ function App() {
           </div>
         </div>
 
-        {/* Input Mode Toggle */}
         <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 mb-4">
           {['text', 'url', 'pdf'].map((mode) => (
             <button
@@ -258,7 +250,6 @@ function App() {
           ))}
         </div>
 
-        {/* Input Area */}
         <div className="mb-4">
           {inputMode === 'text' && (
             <textarea
@@ -352,7 +343,6 @@ function App() {
           </div>
         </div>
 
-        {/* Summarize Button */}
         <button
           onClick={handleSummarize}
           disabled={isDisabled}
@@ -380,7 +370,6 @@ function App() {
           )}
         </button>
 
-        {/* Error */}
         {error && (
           <div className="mt-4 px-4 py-3 rounded-xl bg-red-500/8 border border-red-500/15 text-red-300 text-sm flex items-center gap-3">
             <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -392,7 +381,6 @@ function App() {
           </div>
         )}
 
-        {/* Truncated Warning */}
         {truncated && (
           <div className="mt-4 px-4 py-3 rounded-xl bg-amber-500/8 border border-amber-500/15 text-amber-300 text-sm flex items-center gap-3">
             <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -404,7 +392,6 @@ function App() {
           </div>
         )}
 
-        {/* Result */}
         {summary && (
           <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 animate-[fadeIn_0.4s_ease]">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800">
@@ -421,7 +408,6 @@ function App() {
           </div>
         )}
 
-        {/* Footer */}
         <div className="mt-10 flex flex-col items-center justify-center gap-3">
           <p className="text-xs text-zinc-700">
             Built by <a href="https://github.com/BeratTansu" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:text-violet-300 transition-colors font-medium cursor-pointer">Berat Tansu Çabuk</a> — Powered by Hugging Face AI
@@ -437,7 +423,6 @@ function App() {
         </div>
       </div>
 
-      {/* HISTORY MODAL */}
       {showHistoryModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-2xl max-h-[80vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-2xl relative animate-[fadeIn_0.2s_ease]">
@@ -474,7 +459,6 @@ function App() {
         </div>
       )}
 
-      {/* AUTHENTICATION MODAL */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 relative animate-[fadeIn_0.2s_ease]">

@@ -158,7 +158,7 @@ ai-summarizer/
 
 - [x] Multi-language summarization support
 - [x] PDF file upload and summarization
-- [ ] User authentication and summary history
+- [x] User authentication and summary history
 - [x] Docker containerization
 - [x] Deploy to cloud (Render + Vercel)
 
