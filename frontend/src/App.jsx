@@ -12,8 +12,60 @@ function App() {
   const [inputMode, setInputMode] = useState('text')
   const [copied, setCopied] = useState(false)
   const [language, setLanguage] = useState('English')
+  const [token, setToken] = useState(localStorage.getItem('token') || null)
+  const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || null)
 
-  // Dosya seçildiğinde çalışan kontrol fonksiyonu
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isLoginMode, setIsLoginMode] = useState(true)
+
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [isAuthLoading, setIsAuthLoading] = useState(false)
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setIsAuthLoading(true);
+
+    const endpoint = isLoginMode ? '/login' : '/register';
+
+    try {
+      const response = await fetch(`https://ai-summarizer-iwtj.onrender.com${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail, password: authPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.detail || 'Authentication failed.');
+
+      if (isLoginMode) {
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('userEmail', authEmail);
+        setToken(data.access_token);
+        setUserEmail(authEmail);
+        setShowAuthModal(false);
+        setAuthPassword('');
+      } else {
+        setIsLoginMode(true);
+        setAuthError('Registration successful! Please log in.');
+      }
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    setToken(null);
+    setUserEmail(null);
+  };
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setError('');
@@ -111,22 +163,42 @@ function App() {
       <div className="w-full max-w-2xl relative z-10">
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center text-violet-400">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <polyline points="14,2 14,8 20,8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <line x1="10" y1="9" x2="8" y2="9" />
-              </svg>
+        {/* Header */}
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center text-violet-400">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14,2 14,8 20,8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <line x1="10" y1="9" x2="8" y2="9" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
+                Summarize<span className="text-violet-400">.ai</span>
+              </h1>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-100">
-              Summarize<span className="text-violet-400">.ai</span>
-            </h1>
+            <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Summarize your texts instantly with AI</p>
           </div>
-          <p className="text-sm text-zinc-600 pl-13 ml-[52px]">Summarize your texts instantly with AI</p>
+
+          {/* GİRİŞ YAPILMIŞSA KULLANICI ADI VE ÇIKIŞ BUTONU, YAPILMAMIŞSA SİGN IN BUTONU */}
+          <div className="flex items-center gap-3">
+            {token ? (
+              <div className="flex flex-col items-end">
+                <span className="text-xs font-medium text-violet-400">{userEmail.split('@')[0]}</span>
+                <button onClick={handleLogout} className="text-xs text-zinc-500 hover:text-red-400 transition-colors cursor-pointer">Sign out</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-all cursor-pointer"
+              >
+                Sign in
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Input Mode Toggle */}
@@ -327,6 +399,74 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* AUTHENTICATION MODAL */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-2xl p-6 relative animate-[fadeIn_0.2s_ease]">
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <h2 className="text-xl font-bold text-zinc-100 mb-6">
+              {isLoginMode ? 'Welcome back' : 'Create an account'}
+            </h2>
+
+            <form onSubmit={handleAuth} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-zinc-200 text-sm focus:outline-none focus:border-violet-500/50"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-400 mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-zinc-200 text-sm focus:outline-none focus:border-violet-500/50"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {authError && (
+                <div className={`text-xs p-2 rounded ${authError.includes('successful') ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                  {authError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isAuthLoading}
+                className="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-500 transition-colors mt-2 disabled:opacity-50 cursor-pointer"
+              >
+                {isAuthLoading ? 'Please wait...' : (isLoginMode ? 'Sign in' : 'Create account')}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center text-sm text-zinc-500">
+              {isLoginMode ? "Don't have an account? " : "Already have an account? "}
+              <button
+                onClick={() => { setIsLoginMode(!isLoginMode); setAuthError(''); }}
+                className="text-violet-400 hover:text-violet-300 font-medium cursor-pointer"
+              >
+                {isLoginMode ? 'Sign up' : 'Sign in'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeIn {
