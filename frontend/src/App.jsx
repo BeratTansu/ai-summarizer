@@ -23,6 +23,10 @@ function App() {
   const [authError, setAuthError] = useState('')
   const [isAuthLoading, setIsAuthLoading] = useState(false)
 
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [historyData, setHistoryData] = useState([])
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false)
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -64,6 +68,25 @@ function App() {
     localStorage.removeItem('userEmail');
     setToken(null);
     setUserEmail(null);
+  };
+
+  const fetchHistory = async () => {
+    setIsHistoryLoading(true);
+    try {
+      const response = await fetch('https://ai-summarizer-iwtj.onrender.com/history', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryData(data.history);
+      }
+    } catch (error) {
+      console.error("History fetch error:", error);
+    } finally {
+      setIsHistoryLoading(false);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -184,11 +207,25 @@ function App() {
           </div>
 
           {/* GİRİŞ YAPILMIŞSA KULLANICI ADI VE ÇIKIŞ BUTONU, YAPILMAMIŞSA SİGN IN BUTONU */}
+          {/* GİRİŞ YAPILMIŞSA KULLANICI ADI, HISTORY VE ÇIKIŞ BUTONU */}
           <div className="flex items-center gap-3">
             {token ? (
               <div className="flex flex-col items-end">
-                <span className="text-xs font-medium text-violet-400">{userEmail.split('@')[0]}</span>
-                <button onClick={handleLogout} className="text-xs text-zinc-500 hover:text-red-400 transition-colors cursor-pointer">Sign out</button>
+                <span className="text-xs font-medium text-violet-400">{userEmail?.split('@')[0]}</span>
+                <div className="flex gap-3 mt-1">
+                  <button
+                    onClick={() => { setShowHistoryModal(true); fetchHistory(); }}
+                    className="text-xs text-zinc-400 hover:text-violet-400 transition-colors cursor-pointer"
+                  >
+                    History
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="text-xs text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
+                  >
+                    Sign out
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -399,6 +436,43 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* HISTORY MODAL */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[80vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-2xl relative animate-[fadeIn_0.2s_ease]">
+            <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-zinc-100">My Summaries</h2>
+              <button onClick={() => setShowHistoryModal(false)} className="text-zinc-500 hover:text-zinc-300 cursor-pointer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              {isHistoryLoading ? (
+                <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin"></div></div>
+              ) : historyData.length === 0 ? (
+                <p className="text-zinc-500 text-center text-sm py-8">No summaries found yet. Start summarizing!</p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {historyData.map((item, index) => (
+                    <div key={index} className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="text-[10px] font-bold text-violet-400 uppercase bg-violet-500/10 px-2 py-1 rounded border border-violet-500/20">
+                          {item.language} • {item.length}
+                        </span>
+                        <span className="text-xs text-zinc-500">{new Date(item.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-xs text-zinc-400 mb-3 line-clamp-2 italic border-l-2 border-zinc-700 pl-3">"{item.original_text}"</p>
+                      <p className="text-sm text-zinc-200 leading-relaxed bg-black/20 p-3 rounded-lg border border-zinc-800/50">{item.summary_text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* AUTHENTICATION MODAL */}
       {showAuthModal && (
